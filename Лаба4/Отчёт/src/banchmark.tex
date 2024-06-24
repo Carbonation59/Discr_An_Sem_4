@@ -1,0 +1,15 @@
+\section{Тест производительности}
+
+\begin{alltt}
+root@DESKTOP-5HM2HTK:~# g++ -pedantic -Wall benchmark.cpp
+root@DESKTOP-5HM2HTK:~# ./a.out <tests/1.t
+Count of lines 100000
+KMP time: 7371us
+Simple search time: 21939us
+root@DESKTOP-5HM2HTK:~#
+\end{alltt}
+
+Как видно, $KMP$ алгоритм работает в три раза быстрее на данных тестах, чем наивный алгоритм. И это очевидно, потому что наивный алгоритм работает за О($n^2$), а алгоритм Кнута-Морриса-Пратта за O(n), плюс требуется время на построение префикс функции.
+
+\pagebreak
+

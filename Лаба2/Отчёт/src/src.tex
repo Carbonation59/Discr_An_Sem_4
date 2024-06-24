@@ -1,0 +1,135 @@
+\section{Описание}
+Требуется написать реализацию $AVL-$дерева. Идея его заключается в том, что у каждой вершины разница высот между левым и правым деревом по модулю не превосходит единицы. Также это дерево является бинарным деревом поиска. При вставке и удалении элементов всегда нужно проверять баланс вершин, у которых он мог измениться, и при необходимости делать балансировку с помощью поворотов. Все действия очень похожи на действия с бинарным деревом.
+
+\pagebreak
+
+\section{Исходный код}
+
+Все функции схожи с функциями для бинарного дерева поиска. Отличием является балансировка, которая требует дополнительного написания функций и внесения новых шагов в функции. Также в структуру ноды я добавил поле для баланса и ссылку на предка, чтобы было легче совершать балансировку. Алгоритм поворотов взят прямиком из  книги Кормена: в зависимости от типа поворота (правый или левый) левый или правый ребёнок текущей ноды становится на её место, а нода занимает место ребёнка (функции $LeftRotate$ и $RightRotate$). Повороты используются в функции $BalancingForInsert$, когда в ноде баланс равен 2 или -2. После произведённых поворотов баланс становится нулём и дерево снова может считаться $AVL-$деревом. В добавлении (функция $Insert$) я производил изменение баланса только после того, как вставил элемент, поэтому взаимодействие с балансами идёт через родителей. Условие остановки ребалансировки для добавления: баланс одной из нод равен нулю, либо дошли до корня. В это случае возвращаем $true$ и больше балансы не трогаем. Примерно тот же алгоритм и в удалении. Только здесь я уже по ходу поиска ноды я меняю балансы, и при необходимости возвращаю их назад (если ниже баланс уже скорректирован). Такой подход связан с множествами особенностей удаления. В $BalancingForDelete$ мы рассматриваем больше случаев, чем в $BalancingForInsert$(опять же, из-за особенностей удаления). В функции $GoingDeeper$ идёт поиск замены текущей ноде (самый левый элемент правого дерева). Там также происходит ребалансировка, и если выполнены условия конца ребалансировки (для удаления это: стоим в корне, либо баланс текущей ноды равен 1 или -1) возвращаем $true$ и больше балансы не трогаем. В функции $Save$ открываем файл с указанным названием на вывод и с помощью очереди печатаем всё дерево в файл (ключи и значение). Псевдо-бфс. В функции $Load$ мы открываем файл с указанным названием на поток ввода, считываем данные и добавляем их в дерево. Перед считываем и добавлением чистим всё дерево.
+
+\begin{longtable}{|p{7.5cm}|p{7.5cm}|}
+\hline
+\rowcolor{lightgray}
+\multicolumn{2}{|c|} {lab2.cpp}\\
+\hline
+void DestroyTAVLTreeNode(TAVLTree
+Node *x)& Удаление ноды дерева\\
+\hline
+void DestroyTAVLTree(TAVLTreeNode *x)& Удаление всего дерева\\
+\hline
+TAVLTree::$\sim$TAVLTree() & Деструктор дерева\\
+\hline
+void TAVLTree::LeftRotate(TAVLTree
+Node *x)& Левый поворот\\
+\hline
+void TAVLTree::RightRotate(TAVLTree
+Node *y)& Правый поворот\\
+\hline
+void TAVLTree::Insert(string key, 
+unsigned long long value, 
+bool \&status)& Добавление в дерево\\
+\hline
+bool TAVLTree::BalancingFor
+Insert(TAVLTreeNode *node)& Балансировка для добавления\\
+\hline
+bool TAVLTree::Insert( string key, 
+unsigned long long value, 
+TAVLTreeNode *node, bool \&status )& Добавление в дерево элемента, если
+корень уже есть\\
+\hline
+void PrintAVLNodeElems(TAVLTreeNode *x, 
+int h)& Печать всех элементов дерева\\
+\hline
+void TAVLTree::Print()& Печать дерева\\
+\hline
+bool TAVLTree::Search(string key, 
+TAVLTreeNode * node)& Поиск ключа в дереве\\
+\hline
+void TAVLTree::Search(string key)& Поиск\\
+\hline
+bool TAVLTree::BalancingForDelete
+(TAVLTreeNode* node)& Балансировка для удаления\\
+\hline
+bool TAVLTree::GoingDeeper(TAVLTree
+Node *node, string\& key, 
+unsigned long long\& value)& Поиск замены удаляемой ноде\\
+\hline
+void TAVLTree::Delete(string key)& Удаление ноды\\
+\hline
+bool TAVLTree::Delete( string key, 
+TAVLTreeNode *node )& Удаление ноды, если она не корень\\
+\hline
+void TAVLTree::Save(string filename)& Запись дерева в файл\\
+\hline
+void TAVLTree::Load(string filename)& Загрузка дерева из файла\\
+\hline
+\rowcolor{lightgray}
+\hline
+\end{longtable}
+
+\begin{lstlisting}[language=C]
+struct TAVLTreeNode {
+    string key;
+    unsigned long long value;
+    short balance;
+    TAVLTreeNode *left;
+    TAVLTreeNode *right;
+    TAVLTreeNode *parent;
+    TAVLTreeNode(string key1, unsigned long long value1, TAVLTreeNode *left1, TAVLTreeNode *right1, TAVLTreeNode *parent1, short balance1) {
+        key = key1;
+        value = value1;
+        left = left1;
+        right = right1;
+        parent = parent1;
+        balance = balance1;
+    }
+};
+
+class TAVLTree {
+public:
+    TAVLTree() {}
+    ~TAVLTree();
+    void Insert(string key, unsigned long long value, bool &status);
+    void Search(string key);
+    void Delete(string key);
+    void Print();
+    void Save(string filename);
+    void Load(string filename);
+private:
+    bool Insert(string key, unsigned long long value, TAVLTreeNode * node, bool &status);
+    bool Search(string key, TAVLTreeNode * node );
+    void LeftRotate(TAVLTreeNode *node);
+    void RightRotate(TAVLTreeNode *node);
+    bool BalancingForInsert(TAVLTreeNode *node);
+    bool BalancingForDelete(TAVLTreeNode *node);
+    bool GoingDeeper(TAVLTreeNode* node, string& key, unsigned long long& value);
+    bool Delete(string key, TAVLTreeNode * node);
+private:
+    TAVLTreeNode *root = nullptr;
+};
+\end{lstlisting}
+
+
+\section{Консоль}
+\begin{alltt}
+root@DESKTOP-5HM2HTK:~# cat <test
++ a 1
++ A 2
++ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 18446744073709551615
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+A
+- A
+a
+root@DESKTOP-5HM2HTK:~# g++ lab2.cpp
+root@DESKTOP-5HM2HTK:~# ./a.out <test
+OK
+Exist
+OK
+OK: 18446744073709551615
+OK: 1
+OK
+NoSuchWord
+root@DESKTOP-5HM2HTK:~#
+\end{alltt}
+\pagebreak
+

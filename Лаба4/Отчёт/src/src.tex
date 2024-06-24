@@ -1,0 +1,133 @@
+\section{Описание}
+Требуется написать реализацию алгоритма $KMP$. Идея его заключается в том, что в начале нужно посчитать префикс функцию для каждого элемента паттерна. Префикс функция показывает, какого наибольшего размера суффикс текущей строки совпадает с её префиксом. При прикладывании паттерна к тексту, мы смотрим, какова длина совпавшей части, после чего сдвигаем паттерн на значение, равное значению префикс функции последнего совпавшего элемента. 
+
+\pagebreak
+
+\section{Исходный код}
+
+Для начала введём паттерн в массив стрингов, параллельно приводя все буквы к нижнему регистру. В векторе $numbersOfFirstAlphaOnPos$ значение на конкретной позиции показывает, сколько слов, совпадающих с первым, встречалось до этого в паттерне. Затем посчитаем сильную префикс функцию (она отличается от обычной тем, что после префиксов одинакового размера всегда следует разная буква) с помощью z - функции для каждой позиции (z - функция показывает, какой длины префикс строки совпадает с последующими символами относительно текущей позиции, включая символ на текущей позиции). Из z - функции получается сильная префикс функция путём переносов значений по массиву на число, равное значению z - функции в конкретной позиции. Затем создадим очередь $posOfFirstAlpha$, в которой будут содердаться все позиции элементов в тексте, совпадающих с первым элементом паттерна и совпадающих с тем положением паттерна, на которое он передвинут в данный момент относительно текста. Далее построчно с помощью потоков (а затем по словам) вводим сам текст и сравниеваем его с паттерном. При совпадении слова с элементом паттерна сдвигаем позицию, на которой мы стоим в паттерне, и вводим следующее слово. Если слово не совпало, смотрим, какое значение префикс функции у предыдущего элемента, и на это значение относительно начала сдвигаем наш паттерн. Сдвигаем его до тех пор, пока не сдвинем на начало паттерна, либо элементы не совпадут. Если мы сверили все элементы паттерна, то выводим значение первого элемента очереди и сдвигаем наш паттерн на значение, равное значению префикс функции последнего элемента паттерна.
+
+\begin{lstlisting}[language=C]
+#include <iostream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <sstream>
+
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr); cout.tie(nullptr);
+    vector<string> pattern;
+    vector<long long> numbersOfFirstAlphaOnPos;
+    vector<string> text;
+    long long numbersOfFirstAlpha = 0;
+    string s;
+    getline(cin, s);
+    istringstream patternStream(s);
+    while(patternStream >> s){
+        transform(s.begin(), s.end(), s.begin(),
+            [](char c) { if(c < 'a'){
+                            return char (c + ' ');
+                        }
+                        return c; });
+        pattern.push_back(s);
+        if(s.size() == pattern[0].size() && s == pattern[0]){
+            numbersOfFirstAlpha++;
+        }
+        numbersOfFirstAlphaOnPos.push_back(numbersOfFirstAlpha);
+    }
+    int patterSizeOfFirstAlpha = pattern[0].size();
+    long long p_size = pattern.size();
+    vector<long long> spfunc(p_size);
+    spfunc[0] = 0;
+    long long k;
+    long long l;
+    long long r;
+    for(long long i = p_size - 1; i > 0 ; i--){
+        l = 0;
+        r = i;
+        k = 0;
+        while(r < p_size && pattern[l].size() == pattern[r].size() && pattern[l] == pattern[r]) {
+            l++;
+            r++;
+            k++;
+        }
+        r--;
+        spfunc[r] = k;
+    }
+    long long pos = 0;
+    long long alpha = 0;
+    long long line = 0;
+    queue<pair<long long, long long>> posOfFirstAlpha;
+    string st;
+    istringstream textStream;
+    while(getline(cin, st)){
+        line++;
+        textStream.clear();
+        textStream.str(st);
+        alpha = 0;
+        while (textStream >> s) {
+            transform(s.begin(), s.end(), s.begin(),
+            [](char c) { if(c < 'a'){
+                            return char (c + ' ');
+                        }
+                        return c; });
+            alpha++;
+            if(s.size() == patterSizeOfFirstAlpha && s == pattern[0]){
+                posOfFirstAlpha.push({line, alpha});
+                if(posOfFirstAlpha.size() > numbersOfFirstAlpha){
+                    posOfFirstAlpha.pop();
+                }
+            }
+            if(s.size() == pattern[pos].size() && s == pattern[pos]){
+                pos++;
+            }
+            else {
+                if(pos != 0){
+                    pos--;
+                }
+                pos = spfunc[pos];
+                if(s.size() == pattern[pos].size() && pattern[pos] == s){
+                    pos++;
+                } else {
+                    while(pos != 0 && pattern[pos] != s){
+                        pos--;
+                        pos = spfunc[pos];
+                    }
+                    if(s.size() == pattern[pos].size() && pattern[pos] == s){
+                        pos++;
+                    }
+                }
+                while(posOfFirstAlpha.size() > numbersOfFirstAlphaOnPos[pos]){
+                    posOfFirstAlpha.pop();
+                }
+            }
+            if(pos == p_size){
+                cout << posOfFirstAlpha.front().first << ", " << posOfFirstAlpha.front().second  << '\n';
+                pos = spfunc[pos - 1];
+                while(posOfFirstAlpha.size() > numbersOfFirstAlphaOnPos[pos]){
+                    posOfFirstAlpha.pop();
+                }
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+
+\section{Консоль}
+\begin{alltt}
+root@DESKTOP-5HM2HTK:~# cat <test
+cat dog cat dog bird
+CAT dog CaT Dog Cat DOG bird CAT
+dog cat dog bird
+root@DESKTOP-5HM2HTK:~# g++ lab4.cpp
+root@DESKTOP-5HM2HTK:~# ./a.out <test
+1, 3
+1, 8
+root@DESKTOP-5HM2HTK:~#
+\end{alltt}
+\pagebreak
+
